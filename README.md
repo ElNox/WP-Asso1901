@@ -5,7 +5,7 @@ Donate link: http://myworlds.carneyandco.fr/
 Tags: association, club, members
 Requires at least: 4.3.1
 Tested up to: 1.3.1
-Stable tag: 4.3
+Stable tag: trunk
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
