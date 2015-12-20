@@ -1,15 +1,4 @@
 <?php
-
-/**
- * Fired during plugin activation
- *
- * @link       http://example.com
- * @since      1.0.0
- *
- * @package    Asso1901
- * @subpackage Asso1901/includes
- */
-
 /**
  * Fired during plugin activation.
  *
@@ -30,6 +19,11 @@ class Asso1901_Activator {
 	 * @since    1.0.0
 	 */
 	public static function activate() {
+
+		include_once plugin_dir_path( __FILE__ ).'asso1901-db-schema.php';
+		$schema = new Asso1901_DbSchema();
+
+		$schema->create();
 
 	}
 

@@ -1,15 +1,4 @@
 <?php
-
-/**
- * The admin-specific functionality of the plugin.
- *
- * @link       http://example.com
- * @since      1.0.0
- *
- * @package    Asso1901
- * @subpackage Asso1901/admin
- */
-
 /**
  * The admin-specific functionality of the plugin.
  *
@@ -52,6 +41,11 @@ class Asso1901_Admin {
 		$this->plugin_name = $plugin_name;
 		$this->version = $version;
 
+		add_action( 'admin_menu', array($this,'asso1901_main_menu') );
+		include_once plugin_dir_path( __FILE__ ).'partials/asso1901-user-meta.php';
+		new Asso1901_UserMeta();
+		include_once plugin_dir_path( __FILE__ ).'partials/asso1901-settings.php';
+		new Asso1901_Settings();
 	}
 
 	/**
@@ -99,5 +93,48 @@ class Asso1901_Admin {
 		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/asso1901-admin.js', array( 'jquery' ), $this->version, false );
 
 	}
+
+	public function asso1901_main_menu_page() {
+			include('pages/admin-home.php');
+	}
+
+	public function asso1901_adherents_page() {
+			include('pages/admin-adherents.php');
+	}
+
+	public function asso1901_contrats_page() {
+			include('pages/admin-contrats.php');
+	}
+
+	function asso1901_main_menu() {
+		//add an item to the menu
+		add_menu_page (
+				get_option("asso1901-settings")['asso1901-name'],
+				get_option("asso1901-settings")['asso1901-name'],
+				'manage_options',
+				'asso1901/admin-home.php',
+				array($this,'asso1901_main_menu_page')
+		);
+
+		add_submenu_page(
+		  'asso1901/admin-home.php',
+			'Les adhérents',
+			'Les adhérents',
+			'manage_options',
+			'asso1901/admin-adherents.php',
+			array($this,'asso1901_adherents_page')
+		);
+
+		add_submenu_page(
+		  'asso1901/admin-home.php',
+			'Les contrats',
+			'Les contrats',
+			'manage_options',
+			'asso1901/admin-contrats.php',
+			array($this,'asso1901_contrats_page')
+		);
+	}
+
+
 
 }

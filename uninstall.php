@@ -29,3 +29,8 @@
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 	exit;
 }
+
+
+include_once ABSPATH.'includes/asso1901-db-schema.php';
+$schema = new Asso1901_DbSchema();
+$schema->drop();
