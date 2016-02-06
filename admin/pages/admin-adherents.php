@@ -75,27 +75,41 @@ class My_List_Table extends WP_List_Table {
   }
 
   function process_bulk_action(){
-    if(!empty($_POST['action']) || !empty($_POST['action2']) ) {
-      if ($_POST['action'] == 'delete' || $_POST['action2'] == 'delete') {
-        // TODO DELETE option
-        die("Ils sont supprimés");
-      }else if ($_POST['action'] == 'adhere' || $_POST['action2'] == 'adhere') {
-        // TODO DELETE option
-        die("Ils adhèrent");
-      }
+    // security check!
+    if ( isset( $_POST['_wpnonce'] ) && ! empty( $_POST['_wpnonce'] ) ) {
+        $nonce  = filter_input( INPUT_POST, '_wpnonce', FILTER_SANITIZE_STRING );
+        $action = 'bulk-' . $this->_args['plural'];
+        if ( ! wp_verify_nonce( $nonce, $action ) )
+            wp_die( 'Nope! Security check failed!' );
     }
-  }
 
-  function usort_reorder( $a, $b ) {
-    // If no sort, default to title
-    $orderby = ( ! empty( $_GET['orderby'] ) ) ? $_GET['orderby'] : 'last_name';
-    // If no order, default to asc
-    $order = ( ! empty($_GET['order'] ) ) ? $_GET['order'] : 'asc';
-    // Determine sort order
-    $result = strcmp( $a[$orderby], $b[$orderby] );
-    // Send final sort direction to usort
-    //return ( $order === 'ASC' ) ? $result : -$result;
-    return $order;
+    switch ( $this->current_action() ) {
+        case 'delete':
+            $entry_id = ( is_array( $_REQUEST['adherent'] ) ) ? $_REQUEST['adherent'] : array( $_REQUEST['adherent'] );
+            global $wpdb;
+            foreach ( $entry_id as $id ) {
+                $id = absint( $id );
+                echo $id.', ';
+                //$wpdb->query( "DELETE FROM $this->entries_table_name WHERE entries_id = $id" );
+            }
+            wp_die( 'Delete something ');
+            break;
+        case 'adhere':
+            $entry_id = ( is_array( $_REQUEST['adherent'] ) ) ? $_REQUEST['adherent'] : array( $_REQUEST['adherent'] );
+            global $wpdb;
+            foreach ( $entry_id as $id ) {
+                $id = absint( $id );
+                echo $id.', ';
+                //$wpdb->query( "DELETE FROM $this->entries_table_name WHERE entries_id = $id" );
+            }
+            wp_die( 'Adhère something' );
+            break;
+        default:
+            // do nothing or something else
+            return;
+            break;
+    }
+    return;
   }
 
   function prepare_items() {
@@ -166,6 +180,9 @@ class My_List_Table extends WP_List_Table {
       <input type="hidden" name="page" value="my_list_test" />
       <?php $myListTable->search_box('search', 'search_id'); ?>
     </form>
-    <?php $myListTable->display();?>
+
+    <form method="post">
+      <?php $myListTable->display();?>
+    </form>
 
 </div>
