@@ -46,6 +46,7 @@ class Asso1901_Admin {
 		new Asso1901_UserMeta();
 		include_once plugin_dir_path( __FILE__ ).'partials/asso1901-settings.php';
 		new Asso1901_Settings();
+		add_filter('set-screen-option', array($this,'adherents_table_set_option') , 10, 3);
 	}
 
 	/**
@@ -116,7 +117,8 @@ class Asso1901_Admin {
 				array($this,'asso1901_main_menu_page')
 		);
 
-		add_submenu_page(
+		global $hook_adherents;
+		$hook_adherents = add_submenu_page(
 		  'asso1901/admin-home.php',
 			'Les adhérents',
 			'Les adhérents',
@@ -124,6 +126,9 @@ class Asso1901_Admin {
 			'asso1901/admin-adherents.php',
 			array($this,'asso1901_adherents_page')
 		);
+		add_action( "load-$hook_adherents", array($this, 'adherents_add_options') );
+		add_action( "load-$hook_adherents", array($this, 'adherents_add_help_tab') );
+
 
 		add_submenu_page(
 		  'asso1901/admin-home.php',
@@ -134,6 +139,43 @@ class Asso1901_Admin {
 			array($this,'asso1901_contrats_page')
 		);
 	}
+
+	function adherents_add_options() {
+		global $hook_adherents;
+		$screen = get_current_screen();
+		// get out of here if we are not on our settings page
+		if(!is_object($screen))
+        return;
+    switch($screen->id) :
+	    case $hook_adherents :
+			  $args = array(
+			         'label' => 'Adhérents',
+			         'default' => 20,
+			         'option' => 'adherents_per_page'
+			         );
+	 		add_screen_option( 'per_page', $args );
+			break;
+		endswitch;
+
+	}
+	function adherents_table_set_option($status, $option, $value) {
+		if ( 'adherents_per_page' == $option ) {
+			return $value;
+		}
+		return $status;
+	}
+
+function adherents_add_help_tab () {
+    $screen = get_current_screen();
+
+    // Add my_help_tab if current screen is My Admin Page
+    $screen->add_help_tab( array(
+        'id'	=> 'my_help_tab',
+        'title'	=> __('My Help Tab'),
+        'content'	=> '<p>' . __( 'Descriptive content that will show in My Help Tab-body goes here.' ) . '</p>',
+    ) );
+}
+
 
 
 
