@@ -47,6 +47,7 @@ class Asso1901_Admin {
 		include_once plugin_dir_path( __FILE__ ).'partials/asso1901-settings.php';
 		new Asso1901_Settings();
 		add_filter('set-screen-option', array($this,'adherents_table_set_option') , 10, 3);
+		add_action( "admin_post_asso1901_add_user", array($this, 'process_user_add') );
 	}
 
 	/**
@@ -103,8 +104,8 @@ class Asso1901_Admin {
 			include('pages/admin-adherents.php');
 	}
 
-	public function asso1901_contrats_page() {
-			include('pages/admin-contrats.php');
+	public function asso1901_adherent_add_page() {
+			include('pages/admin-adherent-add.php');
 	}
 
 	function asso1901_main_menu() {
@@ -129,16 +130,60 @@ class Asso1901_Admin {
 		add_action( "load-$hook_adherents", array($this, 'adherents_add_options') );
 		add_action( "load-$hook_adherents", array($this, 'adherents_add_help_tab') );
 
-
 		add_submenu_page(
-		  'asso1901/admin-home.php',
-			'Les contrats',
-			'Les contrats',
-			'manage_options',
-			'asso1901/admin-contrats.php',
-			array($this,'asso1901_contrats_page')
+			'asso1901/admin-adherents.php',
+			"Ajouter un adhérent",
+			"Ajouter un adhérent",
+			"manage_options",
+			"asso1901/adherent-add-page.php",
+			array($this,'asso1901_adherent_add_page')
 		);
 	}
+
+	function process_user_add() {
+		 if ( !current_user_can( 'manage_options' ) )
+		 {
+				wp_die( 'You are not allowed to be on this page.' );
+		 }
+		 // Check that nonce field
+		 check_admin_referer( 'asso1901_op_verify' );
+
+		 if ( isset( $_POST['first_name'] ) )
+		 {
+			 	$first_name = sanitize_text_field( $_POST['first_name']);
+				$last_name = sanitize_text_field( $_POST['last_name']);
+				$user_email = sanitize_text_field( $_POST['user_email']);
+
+			 	$user_id = username_exists( $user_email );
+				if ( !$user_id and email_exists($user_email) == false ) {
+					$random_password = wp_generate_password( $length=12, $include_standard_special_chars=false );
+
+					$userdata = array(
+					    'user_login'  =>  $user_email,
+							'first_name'  =>  $first_name,
+							'last_name'  =>  $last_name,
+							'nickname'	=> preg_replace('/\s+/', '', $first_name.".".$last_name),
+							'display_name' => $first_name." ".ucfirst(substr($last_name, 0,1)).".",
+					    'user_email'    =>  $user_email,
+					    'user_pass'   =>  $random_password
+					);
+
+					$user_id = wp_insert_user( $userdata );
+					update_user_meta( $user_id, 'asso1901-telephone', sanitize_text_field($_POST['asso1901-telephone']) );
+					update_user_meta( $user_id, 'asso1901-adresse', sanitize_text_field( $_POST['asso1901-adresse']) );
+					update_user_meta( $user_id, 'asso1901-type-adhesion', sanitize_text_field($_POST['asso1901-type-adhesion']) );
+					update_user_meta( $user_id, 'asso1901-adhesion', date("Y") );
+				} else {
+					$random_password = __('User already exists.  Password inherited.');
+				}
+
+
+		 }
+
+		 wp_redirect(  admin_url( 'admin.php?page=asso1901/adherent-add-page.php&m=1' ) );
+		 exit;
+	}
+
 
 	function adherents_add_options() {
 		global $hook_adherents;
@@ -153,11 +198,12 @@ class Asso1901_Admin {
 			         'default' => 20,
 			         'option' => 'adherents_per_page'
 			         );
-	 		add_screen_option( 'per_page', $args );
+	 		  add_screen_option( 'per_page', $args );
 			break;
 		endswitch;
 
 	}
+
 	function adherents_table_set_option($status, $option, $value) {
 		if ( 'adherents_per_page' == $option ) {
 			return $value;

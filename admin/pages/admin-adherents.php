@@ -18,6 +18,7 @@ class My_List_Table extends WP_List_Table {
       'user_email' => 'Mail',
       'telephone' => 'Téléphone',
       'adress' => 'Adresse',
+      'type-adhesion' => 'Type d\'adhérent',
       'adhesion' => 'Adhésion'
     );
     return $columns;
@@ -41,8 +42,9 @@ class My_List_Table extends WP_List_Table {
     switch( $column_name ) {
       case 'last_name':
         $actions = array(
-          'edit'      => sprintf('<a href="?page=%s&action=%s&adherent=%s">Edit</a>',$_REQUEST['page'],'edit',$item->ID),
-          'delete'    => sprintf('<a href="?page=%s&action=%s&adherent=%s">Delete</a>',$_REQUEST['page'],'delete',$item->ID),
+          'renewal'      => sprintf('<a href="?page=%s&action=%s&adherent=%s">Renouvellement</a>',$_REQUEST['page'],'renewal',$item->ID),
+          'edit'      => sprintf('<a href="?page=%s&action=%s&adherent=%s">Modifier</a>',$_REQUEST['page'],'edit',$item->ID),
+          'delete'    => sprintf('<a href="?page=%s&action=%s&adherent=%s">Supprimer</a>',$_REQUEST['page'],'delete',$item->ID),
         );
         return sprintf('%1$s %2$s', $item->last_name, $this->row_actions($actions) );
         //return $item->last_name;
@@ -54,6 +56,8 @@ class My_List_Table extends WP_List_Table {
         return esc_html( get_user_meta($item->ID, 'asso1901-telephone',true) );
       case 'adress':
         return esc_html( get_user_meta($item->ID, 'asso1901-adresse',true) );
+      case 'type-adhesion':
+        return esc_html( get_user_meta($item->ID, 'asso1901-type-adhesion',true) );
       case 'adhesion':
         $adhesions = explode(",", get_user_meta($item->ID, 'asso1901-adhesion',true));
         $user_adh = "Aucune";
@@ -68,7 +72,7 @@ class My_List_Table extends WP_List_Table {
 
   function get_bulk_actions() {
     $actions = array(
-      'adhere'    => 'Adhère',
+      'renewal'    => 'Renouveller',
       'delete'    => 'Supprimer'
     );
     return $actions;
@@ -85,24 +89,33 @@ class My_List_Table extends WP_List_Table {
 
     switch ( $this->current_action() ) {
         case 'delete':
-            $entry_id = ( is_array( $_REQUEST['adherent'] ) ) ? $_REQUEST['adherent'] : array( $_REQUEST['adherent'] );
-            global $wpdb;
-            foreach ( $entry_id as $id ) {
-                $id = absint( $id );
-                echo $id.', ';
-                //$wpdb->query( "DELETE FROM $this->entries_table_name WHERE entries_id = $id" );
+            wp_die("La suppression n'est pas implémentée");
+            if(array_key_exists('adherent', $_REQUEST)){
+              if ( ! current_user_can( 'delete_users' ) )
+                  $errors = new WP_Error( 'edit_users', __( 'You can&#8217;t delete users.' ) );
+
+              $entry_id = ( is_array( $_REQUEST['adherent'] ) ) ? $_REQUEST['adherent'] : array( $_REQUEST['adherent'] );
+              global $wpdb;
+              foreach ( $entry_id as $id ) {
+                  $id = absint( $id );
+                  echo $id.', ';
+                  //$wpdb->query( "DELETE FROM $this->entries_table_name WHERE entries_id = $id" );
+              }
             }
-            wp_die( 'Delete something ');
             break;
-        case 'adhere':
-            $entry_id = ( is_array( $_REQUEST['adherent'] ) ) ? $_REQUEST['adherent'] : array( $_REQUEST['adherent'] );
-            global $wpdb;
-            foreach ( $entry_id as $id ) {
-                $id = absint( $id );
-                echo $id.', ';
-                //$wpdb->query( "DELETE FROM $this->entries_table_name WHERE entries_id = $id" );
+        case 'renewal':
+          if(array_key_exists('adherent', $_REQUEST)){
+              $entry_id = ( is_array( $_REQUEST['adherent'] ) ) ? $_REQUEST['adherent'] : array( $_REQUEST['adherent'] );
+              global $wpdb;
+              foreach ( $entry_id as $id ) {
+                  $id = absint( $id );
+                  $adhesions = get_user_meta($id, 'asso1901-adhesion',true);
+                  $user_adh = "Aucune";
+                  if(strpos($adhesions, date("Y"))==false){
+                    update_user_meta( $id, 'asso1901-adhesion',get_user_meta($id, 'asso1901-adhesion',true).",".date("Y") );
+                  }
+              }
             }
-            wp_die( 'Adhère something' );
             break;
         default:
             // do nothing or something else
@@ -114,6 +127,11 @@ class My_List_Table extends WP_List_Table {
 
   function prepare_items() {
     $this->process_bulk_action();
+
+    // get the current admin screen
+    $screen = get_current_screen();
+    // Retrieve filter value
+    $per_adhesion = $screen->get_option('per_adhesion', 'option');
 
     $orderby = ( ! empty( $_GET['orderby'] ) ) ? $_GET['orderby'] : 'last_name';
     $order = ( ! empty($_GET['order'] ) ) ? $_GET['order'] : 'asc';
@@ -139,8 +157,6 @@ class My_List_Table extends WP_List_Table {
               );
     $users = get_users($args);
 
-    // get the current admin screen
-    $screen = get_current_screen();
     // retrieve the "per_page" option
     $screen_option = $screen->get_option('per_page', 'option');
     // retrieve the value of the option stored for the current user
@@ -171,7 +187,7 @@ class My_List_Table extends WP_List_Table {
 
 <div class="wrap">
 
-    <h2>Les adhérents <a href="<?= admin_url('admin.php?page=pages/admin-adherent-add.php') ?>">Ajouter</a></h2>
+    <h2>Les adhérents <a href="<?= admin_url('admin.php?page=asso1901/adherent-add-page.php') ?>">Ajouter</a></h2>
     <?php
     $myListTable = new My_List_Table();
     $myListTable->prepare_items();
