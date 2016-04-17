@@ -4,7 +4,7 @@ if( ! class_exists( 'WP_List_Table' ) ) {
     require_once( ABSPATH . 'wp-admin/includes/class-wp-list-table.php' );
 }
 
-class My_List_Table extends WP_List_Table {
+class Adherents_List_Table extends WP_List_Table {
 
   function no_items() {
     _e( 'Aucun adhérents.' );
@@ -189,7 +189,7 @@ class My_List_Table extends WP_List_Table {
 
     <h2>Les adhérents <a href="<?= admin_url('admin.php?page=asso1901/adherent-add-page.php') ?>">Ajouter</a></h2>
     <?php
-    $myListTable = new My_List_Table();
+    $myListTable = new Adherents_List_Table();
     $myListTable->prepare_items();
     ?>
     <form method="post">

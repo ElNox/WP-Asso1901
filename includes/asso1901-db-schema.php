@@ -30,10 +30,12 @@ class Asso1901_DbSchema {
 		if($wpdb->get_var("show tables like '$table_name'") != $table_name) {
 			$sql = "CREATE TABLE ".$table_name." (
 				`id` mediumint(9) NOT NULL AUTO_INCREMENT,
-			  `titre` mediumtext NOT NULL,
-			  `debut` datetime NOT NULL,
-			  `fin` datetime NOT NULL,
-			  UNIQUE KEY `id` (`id`)
+			  `titre` varchar(20) NOT NULL,
+				`date_ag` date NOT NULL,
+			  `date_debut` date NOT NULL,
+			  `date_fin` date NOT NULL,
+			  UNIQUE KEY `id` (`id`),
+				UNIQUE `titre` (`titre`)
 			);";
 			error_log($sql);
 

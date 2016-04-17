@@ -48,6 +48,8 @@ class Asso1901_Admin {
 		new Asso1901_Settings();
 		add_filter('set-screen-option', array($this,'adherents_table_set_option') , 10, 3);
 		add_action( "admin_post_asso1901_add_user", array($this, 'process_user_add') );
+		add_action( "admin_post_asso1901_add_annee", array($this, 'process_annee_add') );
+
 	}
 
 	/**
@@ -108,6 +110,10 @@ class Asso1901_Admin {
 			include('pages/admin-adherent-add.php');
 	}
 
+	public function asso1901_annee_adhesion(){
+			include('pages/admin-annee-adhesion.php');
+	}
+
 	function asso1901_main_menu() {
 		//add an item to the menu
 		add_menu_page (
@@ -129,6 +135,15 @@ class Asso1901_Admin {
 		);
 		add_action( "load-$hook_adherents", array($this, 'adherents_add_options') );
 		add_action( "load-$hook_adherents", array($this, 'adherents_add_help_tab') );
+
+		add_submenu_page(
+			'asso1901/admin-home.php',
+			"Gérer les années",
+			"Gérer les années",
+			"manage_options",
+			"asso1901/annee-adhesion-page.php",
+			array($this,'asso1901_annee_adhesion')
+		);
 
 		add_submenu_page(
 			'asso1901/admin-adherents.php',
@@ -177,13 +192,58 @@ class Asso1901_Admin {
 					$random_password = __('User already exists.  Password inherited.');
 				}
 
-
 		 }
 
 		 wp_redirect(  admin_url( 'admin.php?page=asso1901/adherent-add-page.php&m=1' ) );
 		 exit;
 	}
 
+	function titre_exists($titre){
+		return false;
+	}
+
+	function process_annee_add() {
+		 if ( !current_user_can( 'manage_options' ) )
+		 {
+				wp_die( 'You are not allowed to be on this page.' );
+		 }
+		 // Check that nonce field
+		 check_admin_referer( 'asso1901_op_verify' );
+
+		 if ( isset( $_POST['titre'] ) )
+		 {
+			 	$titre = sanitize_text_field( $_POST['titre']);
+				$dt = \DateTime::createFromFormat('d/m/Y', sanitize_text_field( $_POST['date_ag']));
+				$date_ag = $dt->format('Y-m-d');
+				$dt = \DateTime::createFromFormat('d/m/Y', sanitize_text_field( $_POST['date_debut']));
+				$date_debut = $dt->format('Y-m-d');
+				$dt = \DateTime::createFromFormat('d/m/Y', sanitize_text_field( $_POST['date_fin']));
+				$date_fin = $dt->format('Y-m-d');
+
+				if ( !$this->titre_exists( $titre ) ) {
+					$random_password = wp_generate_password( $length=12, $include_standard_special_chars=false );
+
+					$anneedata = array(
+					    'titre'  =>  $titre,
+							'date_ag'  =>  $date_ag,
+							'date_debut'  =>  $date_debut,
+							'date_fin'  =>  $date_fin,
+					);
+
+					global $wpdb;
+					$wpdb->insert($wpdb->prefix . 'asso1901_annee_adhesion',
+						$anneedata,
+						array('%s','%s','%s','%s')
+					);
+				} else {
+					wp_redirect(  admin_url( 'admin.php?page=asso1901/annee-adhesion-page.php&e=1' ) );
+				}
+
+		 }
+
+		 wp_redirect(  admin_url( 'admin.php?page=asso1901/annee-adhesion-page.php&m=1' ) );
+		 exit;
+	}
 
 	function adherents_add_options() {
 		global $hook_adherents;
@@ -217,8 +277,8 @@ function adherents_add_help_tab () {
     // Add my_help_tab if current screen is My Admin Page
     $screen->add_help_tab( array(
         'id'	=> 'my_help_tab',
-        'title'	=> __('My Help Tab'),
-        'content'	=> '<p>' . __( 'Descriptive content that will show in My Help Tab-body goes here.' ) . '</p>',
+        'title'	=> __('Gestion des adhérents'),
+        'content'	=> '<p>' . __( 'Ici, on peut gérer les adhérents de l\'association.' ) . '</p>',
     ) );
 }
 
