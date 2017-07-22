@@ -46,7 +46,7 @@ class Asso1901_Admin {
 		new Asso1901_UserMeta();
 		include_once plugin_dir_path( __FILE__ ).'partials/asso1901-settings.php';
 		new Asso1901_Settings();
-		add_filter('set-screen-option', array($this,'adherents_table_set_option') , 10, 3);
+		add_filter('set-screen-option', array($this,'admin_table_set_option') , 10, 3);
 		add_action( "admin_post_asso1901_add_user", array($this, 'process_user_add') );
 		add_action( "admin_post_asso1901_add_annee", array($this, 'process_annee_add') );
 
@@ -136,14 +136,16 @@ class Asso1901_Admin {
 		add_action( "load-$hook_adherents", array($this, 'adherents_add_options') );
 		add_action( "load-$hook_adherents", array($this, 'adherents_add_help_tab') );
 
-		add_submenu_page(
+		$hook_annees = add_submenu_page(
 			'asso1901/admin-home.php',
 			"Gérer les années",
 			"Gérer les années",
 			"manage_options",
-			"asso1901/annee-adhesion-page.php",
+			"asso1901/admin-annee-adhesion.php",
 			array($this,'asso1901_annee_adhesion')
 		);
+		add_action( "load-$hook_annees", array($this, 'annees_add_options') );
+		add_action( "load-$hook_annees", array($this, 'annees_add_help_tab') );
 
 		add_submenu_page(
 			'asso1901/admin-adherents.php',
@@ -264,8 +266,27 @@ class Asso1901_Admin {
 
 	}
 
-	function adherents_table_set_option($status, $option, $value) {
-		if ( 'adherents_per_page' == $option ) {
+	function annees_add_options() {
+		global $hook_annees;
+		$screen = get_current_screen();
+		// get out of here if we are not on our settings page
+		if(!is_object($screen))
+        return;
+    switch($screen->id) :
+	    case $hook_annees :
+			  $args = array(
+			         'label' => 'Années',
+			         'default' => 20,
+			         'option' => 'annees_per_page'
+			         );
+	 		  add_screen_option( 'per_page', $args );
+			break;
+		endswitch;
+
+	}
+
+	function admin_table_set_option($status, $option, $value) {
+		if ( 'adherents_per_page' == $option || 'annees_per_page' == $option ) {
 			return $value;
 		}
 		return $status;
@@ -279,6 +300,17 @@ function adherents_add_help_tab () {
         'id'	=> 'my_help_tab',
         'title'	=> __('Gestion des adhérents'),
         'content'	=> '<p>' . __( 'Ici, on peut gérer les adhérents de l\'association.' ) . '</p>',
+    ) );
+}
+
+function annees_add_help_tab () {
+    $screen = get_current_screen();
+
+    // Add my_help_tab if current screen is My Admin Page
+    $screen->add_help_tab( array(
+        'id'	=> 'my_help_tab',
+        'title'	=> __('Gestion des années'),
+        'content'	=> '<p>' . __( 'Ici, on peut gérer les années de l\'association.' ) . '</p>',
     ) );
 }
 
