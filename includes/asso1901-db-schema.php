@@ -38,7 +38,14 @@ class Asso1901_DbSchema {
 				UNIQUE `titre` (`titre`)
 			);";
 			error_log($sql);
+			dbDelta($sql);
 
+			$year = date(Y);
+			$date_deb = "01/01/".$year;
+			$date_fin = "31/12/".$year;
+			$sql = "INSERT INTO ".$table_name." (titre, date_ag, date_debut, date_fin)
+			VALUES ('.$year.','.$date_debut.','.$date_debut.','.$date_fin.');";
+			error_log($sql);
 			dbDelta($sql);
 		}
 	}
